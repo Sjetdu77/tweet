@@ -1,5 +1,10 @@
-import warnings, pandas as pd, re
-from sklearn.model_selection import train_test_split
+import warnings, pandas as pd, re, pickle
+from stop_words import get_stop_words
+from sklearn.model_selection import train_test_split as tts
+from sklearn.svm import SVC
+from sklearn.pipeline import make_pipeline
+from sklearn.multiclass import OneVsRestClassifier as oVrClas
+from sklearn.feature_extraction.text import TfidfVectorizer as tfidVec
 
 warnings.simplefilter('ignore')
 lab = pd.read_csv('./labels.csv')
@@ -22,6 +27,16 @@ lab["tweet"] = cor
 x = lab["tweet"]
 y = lab["class"]
 
-x_train, x_test, y_train, y_test = train_test_split(x, y)
+x_train, x_test, y_train, y_test = tts(x, y)
 
-print(x_train.shape, x_test.shape, y_train.shape, y_test.shape)
+clf = make_pipeline(
+        tfidVec(stop_words=get_stop_words('en')),
+        oVrClas(SVC(kernel='linear', probability=True))
+    )
+
+clf.fit(x, y)
+
+s = pickle.dumps(clf)
+clf2 = pickle.dumps(s)
+
+print(clf)
